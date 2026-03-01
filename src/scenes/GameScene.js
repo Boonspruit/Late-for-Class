@@ -254,22 +254,16 @@ export class GameScene extends Phaser.Scene {
 
     // ─── PLAYER ───
     const s0 = this.stairs[0];
-    this.player = this.add.sprite(this.toScreenX(s0.worldX), this.toScreen(s0.worldY), 'student-idle-clean')
+    // Start with right step texture instead of idle
+    this.player = this.add.sprite(this.toScreenX(s0.worldX), this.toScreen(s0.worldY), 'student-step-right-clean')
       .setScale(this.BASE_PLAYER_SCALE).setOrigin(0.5, 1).setDepth(10);
     this.player.setFlipX(this.playerDir === -1);
+    
+    // Track alternating legs (0 = right, 1 = left)
+    this.climbFrameIdx = 0;
 
-    // Create climbing animation from the individual frames
-    this.anims.create({
-      key: 'climb',
-      frames: [
-        { key: 'student-step-right-clean' },
-        { key: 'student-idle-clean' },
-        { key: 'student-step-left-clean' },
-        { key: 'student-idle-clean' }
-      ],
-      frameRate: 8,
-      repeat: -1
-    });
+    // We no longer use a repeating Phaser animation.
+    // Instead, we manually alternate textures per keypress to lock the stance.
 
     // ─── UI ───
     this.scoreText = this.add.text(width / 2, 58, '0', {
@@ -472,12 +466,15 @@ export class GameScene extends Phaser.Scene {
     this.currentIdx = ni;
     const t = this.stairs[ni];
 
-    // Cancel any pending idle revert — player is still climbing
+    // Cancel pending idle/squat reverts
     if (this.idleTimer) { this.idleTimer.remove(false); this.idleTimer = null; }
-
-    // Play new 4-frame climb animation
-    if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'climb') {
-      this.player.play('climb');
+    
+    // Alternate leg textures exactly once per step
+    this.climbFrameIdx = (this.climbFrameIdx + 1) % 2;
+    if (this.climbFrameIdx === 0) {
+      this.player.setTexture('student-step-right-clean');
+    } else {
+      this.player.setTexture('student-step-left-clean');
     }
     
     this.createDust(this.player.x, this.player.y);
@@ -489,12 +486,7 @@ export class GameScene extends Phaser.Scene {
       x: this.toScreenX(t.worldX), y: this.toScreen(t.worldY),
       duration: dur, ease: 'Quad.easeOut',
       onComplete: () => {
-        // Don't snap to idle immediately — wait 250ms for slower animation. If another step comes, it cancels this.
-        this.idleTimer = this.time.delayedCall(250, () => {
-          this.player.stop(); // Stop the 4-frame animation
-          this.player.setTexture('student-idle-clean'); // Reset to standing idle
-          this.idleTimer = null;
-        });
+        // Player now stays frozen in their stepped position (left leg up or right leg up)
         this.score++;
         this.scoreText.setText(this.score.toString());
         this.currentTime = Math.min(this.maxTime, this.currentTime + this.timeRefill);
