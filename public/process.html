@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head><title>Process Sprites</title></head>
+<body>
+  <h1>Sprite Processor</h1>
+  <p>Run this page to download cleaned sprites.</p>
+  <div id="out"></div>
+  <script>
+    const sprites = [
+      'stair.png', 'student-idle.png', 'student-climb.png', 'student-trip.png'
+    ];
+    
+    async function process(src) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.onload = () => {
+          const w = img.width, h = img.height;
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          
+          const imgData = ctx.getImageData(0, 0, w, h);
+          const data = imgData.data;
+          
+          const getPixel = (x, y) => {
+            const i = (y * w + x) * 4;
+            return [data[i], data[i+1], data[i+2], data[i+3]];
+          };
+          const setAlpha = (x, y, a) => { data[(y * w + x) * 4 + 3] = a; };
+          
+          // Get exact bg colors from top-left corners
+          const colorCounts = new Map();
+          for (let y = 0; y < 16; y++) {
+            for (let x = 0; x < 16; x++) {
+              const p = getPixel(x,y);
+              if (p[3] < 10) continue;
+              const key = p.slice(0,3).join(',');
+              colorCounts.set(key, (colorCounts.get(key) || 0) + 1);
+            }
+          }
+          const sorted = [...colorCounts.entries()].sort((a, b) => b[1] - a[1]);
+          if(sorted.length === 0) return resolve();
+          
+          const bgColors = [sorted[0][0].split(',').map(Number)];
+          if (sorted.length > 1) bgColors.push(sorted[1][0].split(',').map(Number));
+          
+          const isBg = (p) => {
+            if (p[3] < 10) return true;
+            for (const bg of bgColors) {
+              if (Math.abs(p[0]-bg[0])<=10 && Math.abs(p[1]-bg[1])<=10 && Math.abs(p[2]-bg[2])<=10) return true;
+            }
+            return false;
+          };
+          
+          const visited = new Uint8Array(w * h);
+          function flood(sx, sy) {
+            if (!isBg(getPixel(sx, sy))) return;
+            const stack = [[sx, sy]];
+            while(stack.length) {
+              const [x, y] = stack.pop();
+              if (x<0 || x>=w || y<0 || y>=h) continue;
+              const idx = y * w + x;
+              if (visited[idx]) continue;
+              if (!isBg(getPixel(x, y))) continue;
+              
+              visited[idx] = 1;
+              setAlpha(x, y, 0);
+              stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+              stack.push([x+1,y+1],[x-1,y-1],[x+1,y-1],[x-1,y+1]);
+            }
+          }
+          
+          for(let x=0; x<w; x++){ flood(x,0); flood(x,h-1); }
+          for(let y=0; y<h; y++){ flood(0,y); flood(w-1,y); }
+          
+          ctx.putImageData(imgData, 0, 0);
+          
+          const link = document.createElement('a');
+          link.download = src.replace('.png', '-clean.png');
+          link.href = canvas.toDataURL();
+          link.innerText = 'Download ' + link.download;
+          link.style.display = 'block';
+          document.getElementById('out').appendChild(link);
+          link.click();
+          resolve();
+        };
+        img.src = '/assets/' + src;
+      });
+    }
+    
+    async function run() {
+      for(const s of sprites) await process(s);
+      document.getElementById('out').innerHTML += '<b>Done! Replace assets with downloaded files and fix code back to direct loading.</b>';
+    }
+    run();
+  </script>
+</body>
+</html>
