@@ -324,6 +324,28 @@ export class GameScene extends Phaser.Scene {
     const prev = this.stairs[this.stairs.length - 1];
     let side = this.popSide();
 
+    // Prevent long oscillating patterns (L R L R L R)
+    if (!this.oscillationCount) this.oscillationCount = 0;
+    if (this.stairs.length > 1) {
+      const prevSide = prev.side || 'R'; // previous step's side
+      if (side !== prevSide) {
+        this.oscillationCount++;
+      } else {
+        this.oscillationCount = 0;
+      }
+      
+      // If we've alternated 4 times in a row, FORCE a same-side step to break the rhythm
+      if (this.oscillationCount >= 4) {
+        side = prevSide;
+        this.oscillationCount = 0;
+        
+        // Also fix the underlying queue so it doesn't get messed up by our forced overwrite
+        if (this.patternQueue.length > 0 && this.patternQueue[0] !== side) {
+           this.patternQueue[0] = side; 
+        }
+      }
+    }
+
     // Direction: L = go left, R = go right
     let dx = (side === 'L') ? -this.STEP_DX : this.STEP_DX;
     let nx = prev.worldX + dx;
@@ -332,9 +354,11 @@ export class GameScene extends Phaser.Scene {
     if (nx < this.MIN_X) {
       nx = prev.worldX + this.STEP_DX;
       side = 'R';
+      this.oscillationCount = 0; // Reset on wall bounce
     } else if (nx > this.MAX_X) {
       nx = prev.worldX - this.STEP_DX;
       side = 'L';
+      this.oscillationCount = 0; // Reset on wall bounce
     }
 
     const ny = prev.worldY + this.STEP_DY;
