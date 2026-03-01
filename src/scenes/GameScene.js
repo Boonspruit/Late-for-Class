@@ -254,16 +254,18 @@ export class GameScene extends Phaser.Scene {
 
     // ─── PLAYER ───
     const s0 = this.stairs[0];
-    // Start with right step texture instead of idle
-    this.player = this.add.sprite(this.toScreenX(s0.worldX), this.toScreen(s0.worldY), 'student-step-right-clean')
+    // Start with standing idle texture (Frame 0)
+    this.player = this.add.sprite(this.toScreenX(s0.worldX), this.toScreen(s0.worldY), 'student-idle-clean')
       .setScale(this.BASE_PLAYER_SCALE).setOrigin(0.5, 1).setDepth(10);
     this.player.setFlipX(this.playerDir === -1);
     
     // Track alternating legs (0 = right, 1 = left)
-    this.climbFrameIdx = 0;
+    // We start at 1 so the VERY first step of the game uses Frame 1 (Right step)
+    // because the logic does (climbFrameIdx + 1) % 2
+    this.climbFrameIdx = 1; 
 
     // We no longer use a repeating Phaser animation.
-    // Instead, we manually alternate textures per keypress to lock the stance.
+    // Instead, we manually alternate textures per keypress.
 
     // ─── UI ───
     this.scoreText = this.add.text(width / 2, 58, '0', {
@@ -466,15 +468,19 @@ export class GameScene extends Phaser.Scene {
     this.currentIdx = ni;
     const t = this.stairs[ni];
 
-    // Cancel pending idle/squat reverts
+    // Cancel pending idle revert
     if (this.idleTimer) { this.idleTimer.remove(false); this.idleTimer = null; }
     
-    // Alternate leg textures exactly once per step
+    // Always advance the alternating state when a step occurs.
+    // If the player was idle, this guarantees they resume on the opposite frame 
+    // from whatever they used last before going idle.
     this.climbFrameIdx = (this.climbFrameIdx + 1) % 2;
+    
+    // Set the appropriate running frame
     if (this.climbFrameIdx === 0) {
-      this.player.setTexture('student-step-right-clean');
+      this.player.setTexture('student-step-right-clean'); // Frame 1 (Right)
     } else {
-      this.player.setTexture('student-step-left-clean');
+      this.player.setTexture('student-step-left-clean'); // Frame 2 (Left)
     }
     
     this.createDust(this.player.x, this.player.y);
@@ -486,7 +492,12 @@ export class GameScene extends Phaser.Scene {
       x: this.toScreenX(t.worldX), y: this.toScreen(t.worldY),
       duration: dur, ease: 'Quad.easeOut',
       onComplete: () => {
-        // Player now stays frozen in their stepped position (left leg up or right leg up)
+        // When stopped for a short duration, return to Frame 0 (idle)
+        this.idleTimer = this.time.delayedCall(150, () => {
+          this.player.setTexture('student-idle-clean');
+          this.idleTimer = null;
+        });
+        
         this.score++;
         this.scoreText.setText(this.score.toString());
         this.currentTime = Math.min(this.maxTime, this.currentTime + this.timeRefill);
