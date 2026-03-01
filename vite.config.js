@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/Late-for-Class/',
+  base: './', // Use relative paths so it works on Vercel and locally
   build: {
     outDir: 'dist',
   },
