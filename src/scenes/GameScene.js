@@ -242,9 +242,17 @@ export class GameScene extends Phaser.Scene {
 
     // ─── PLAYER ───
     const s0 = this.stairs[0];
-    this.player = this.add.image(this.toScreenX(s0.worldX), this.toScreen(s0.worldY), 'student-idle-clean')
+    this.player = this.add.sprite(this.toScreenX(s0.worldX), this.toScreen(s0.worldY), 'student-idle-clean')
       .setScale(this.BASE_PLAYER_SCALE).setOrigin(0.5, 1).setDepth(10);
     this.player.setFlipX(this.playerDir === -1);
+
+    // Create climbing animation from the new 4-frame vertical climb spritesheet
+    this.anims.create({
+      key: 'climb',
+      frames: this.anims.generateFrameNumbers('student-vertical-climb-sheet-clean', { start: 0, end: 3 }),
+      frameRate: 14,
+      repeat: -1
+    });
 
     // ─── UI ───
     this.scoreText = this.add.text(width / 2, 58, '0', {
@@ -450,8 +458,10 @@ export class GameScene extends Phaser.Scene {
     // Cancel any pending idle revert — player is still climbing
     if (this.idleTimer) { this.idleTimer.remove(false); this.idleTimer = null; }
 
-    // Set climbing static texture
-    this.player.setTexture('student-climb-clean');
+    // Play new 4-frame climb animation
+    if (!this.player.anims.isPlaying || this.player.anims.currentAnim.key !== 'climb') {
+      this.player.play('climb');
+    }
     
     this.createDust(this.player.x, this.player.y);
     this.sfx.playStep();
@@ -462,8 +472,9 @@ export class GameScene extends Phaser.Scene {
       x: this.toScreenX(t.worldX), y: this.toScreen(t.worldY),
       duration: dur, ease: 'Quad.easeOut',
       onComplete: () => {
-        // Don't snap to idle — wait 150ms. If another step comes, it cancels this.
+        // Don't snap to idle immediately — wait 150ms. If another step comes, it cancels this.
         this.idleTimer = this.time.delayedCall(150, () => {
+          this.player.stop(); // Stop the 4-frame animation
           this.player.setTexture('student-idle-clean'); // Reset to standing idle
           this.idleTimer = null;
         });
