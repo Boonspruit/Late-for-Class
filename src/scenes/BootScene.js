@@ -26,7 +26,8 @@ export class BootScene extends Phaser.Scene {
     // AI Sprites with solid green (#00FF00) backgrounds
     this.load.image('stair-raw', 'assets/stair-green.png');
     this.load.image('student-idle-raw', 'assets/student-idle-green.png');
-    this.load.image('student-vertical-climb-sheet-raw', 'assets/student-vertical-climb-sheet.png');
+    this.load.image('student-step-left-raw', 'assets/student-step-left.png');
+    this.load.image('student-step-right-raw', 'assets/student-step-right.png');
     this.load.image('student-trip-raw', 'assets/student-trip-green.png');
   }
 
@@ -37,13 +38,9 @@ export class BootScene extends Phaser.Scene {
     // Remove green backgrounds from AI sprites and save them to '-clean' keys
     removeCheckerboard(this, 'stair-raw', 'stair-clean');
     removeCheckerboard(this, 'student-idle-raw', 'student-idle-clean');
+    removeCheckerboard(this, 'student-step-left-raw', 'student-step-left-clean');
+    removeCheckerboard(this, 'student-step-right-raw', 'student-step-right-clean');
     removeCheckerboard(this, 'student-trip-raw', 'student-trip-clean');
-
-    // Process the 1x4 climbing cycle spritesheet (raw image is 2048x512, so frames are 512x512)
-    removeCheckerboard(this, 'student-vertical-climb-sheet-raw', 'student-vertical-climb-sheet-clean', {
-      frameWidth: 512,
-      frameHeight: 512
-    });
 
     // Add safe delay to ensure UI canvas processing finishes
     this.time.delayedCall(200, () => this.scene.start('MenuScene'));

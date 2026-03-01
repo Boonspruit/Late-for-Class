@@ -46,6 +46,9 @@ const PATTERNS = [
   ['R','R','R','L','R','R','R','R'], // (Mirror)
   ['L','L','L','L','L','R','R','L','L','R','R','R','R','R'],
   ['R','R','R','R','R','L','L','R','R','L','L','L','L','L'], // (Mirror)
+  // New Quick Jukes
+  ['R','R','R','R','L','R','L','R','R','R'], 
+  ['L','L','L','L','R','L','R','L','L','L'], // (Mirror)
   // Extreme Quake Patterns injected early and frequently
   ['R','R','L','R','R','R','R','R','R','L','R','L','L','L','L','R','R','R'],
   ['L','L','R','L','L','L','L','L','L','R','L','R','R','R','R','L','L','L'], // (Mirror)
@@ -72,6 +75,9 @@ const MEDIUM_PATTERNS = [
   ['R','R','R','L','R','R','R','R'], // (Mirror)
   ['L','L','L','L','L','R','R','L','L','R','R','R','R','R'],
   ['R','R','R','R','R','L','L','R','R','L','L','L','L','L'], // (Mirror)
+  // New Quick Jukes
+  ['R','R','R','R','L','R','L','R','R','R'], 
+  ['L','L','L','L','R','L','R','L','L','L'], // (Mirror)
   // Extreme Quake Patterns injected early and frequently
   ['R','R','L','R','R','R','R','R','R','L','R','L','L','L','L','R','R','R'],
   ['L','L','R','L','L','L','L','L','L','R','L','R','R','R','R','L','L','L'], // (Mirror)
@@ -97,6 +103,9 @@ const HARD_PATTERNS = [
   ['R','R','R','L','R','R','R','R'], // (Mirror)
   ['L','L','L','L','L','R','R','L','L','R','R','R','R','R'],
   ['R','R','R','R','R','L','L','R','R','L','L','L','L','L'], // (Mirror)
+  // New Quick Jukes
+  ['R','R','R','R','L','R','L','R','R','R'], 
+  ['L','L','L','L','R','L','R','L','L','L'], // (Mirror)
   // Extreme Quake Patterns injected early and frequently
   ['R','R','L','R','R','R','R','R','R','L','R','L','L','L','L','R','R','R'],
   ['L','L','R','L','L','L','L','L','L','R','L','R','R','R','R','L','L','L'], // (Mirror)
@@ -122,6 +131,9 @@ const EXTREME_PATTERNS = [
   ['R','R','R','L','R','R','R','R'], // (Mirror)
   ['R','R','R','R','R','L','L','R','R','L','L','L','L','L'],
   ['L','L','L','L','L','R','R','L','L','R','R','R','R','R'], // (Mirror of above)
+  // New Quick Jukes
+  ['R','R','R','R','L','R','L','R','R','R'], 
+  ['L','L','L','L','R','L','R','L','L','L'], // (Mirror)
   ['R','R','L','R','R','R','R','R','R','L','R','L','L','L','L','R','R','R'], // Very long juke
   ['L','L','R','L','L','L','L','L','L','R','L','R','R','R','R','L','L','L'], // (Mirror)
   ['R','R','L','R','R','R','R','R','R','L','R','L','L','L','L','R','R','R'], // Duplicate for frequency
@@ -246,10 +258,15 @@ export class GameScene extends Phaser.Scene {
       .setScale(this.BASE_PLAYER_SCALE).setOrigin(0.5, 1).setDepth(10);
     this.player.setFlipX(this.playerDir === -1);
 
-    // Create climbing animation from the new 4-frame vertical climb spritesheet
+    // Create climbing animation from the individual frames
     this.anims.create({
       key: 'climb',
-      frames: this.anims.generateFrameNumbers('student-vertical-climb-sheet-clean', { start: 0, end: 3 }),
+      frames: [
+        { key: 'student-step-right-clean' },
+        { key: 'student-idle-clean' },
+        { key: 'student-step-left-clean' },
+        { key: 'student-idle-clean' }
+      ],
       frameRate: 14,
       repeat: -1
     });
