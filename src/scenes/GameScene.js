@@ -267,7 +267,7 @@ export class GameScene extends Phaser.Scene {
         { key: 'student-step-left-clean' },
         { key: 'student-idle-clean' }
       ],
-      frameRate: 14,
+      frameRate: 8,
       repeat: -1
     });
 
@@ -489,8 +489,8 @@ export class GameScene extends Phaser.Scene {
       x: this.toScreenX(t.worldX), y: this.toScreen(t.worldY),
       duration: dur, ease: 'Quad.easeOut',
       onComplete: () => {
-        // Don't snap to idle immediately — wait 150ms. If another step comes, it cancels this.
-        this.idleTimer = this.time.delayedCall(150, () => {
+        // Don't snap to idle immediately — wait 250ms for slower animation. If another step comes, it cancels this.
+        this.idleTimer = this.time.delayedCall(250, () => {
           this.player.stop(); // Stop the 4-frame animation
           this.player.setTexture('student-idle-clean'); // Reset to standing idle
           this.idleTimer = null;
