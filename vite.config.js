@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: './',
+  base: '/Late-for-Class/',
   build: {
     outDir: 'dist',
   },
